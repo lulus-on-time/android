@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Find Myself</string>
+    <string name="show_raw_rssi">%d dBm</string>
+    <string name="show_signal_level">%d units</string>
 </resources>
