@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,16 +28,30 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.lulusontime.findmyself.wifiscan.broadcastreceiver.WifiScanReceiver
 import com.lulusontime.findmyself.ui.theme.FindMyselfTheme
 import com.lulusontime.findmyself.wifiscan.WifiScanScreen
+import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
 
 class MainActivity : ComponentActivity() {
 
+    private var wsr: WifiScanReceiver? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        wsr = WifiScanReceiver(this)
+        registerReceiver(wsr,
+            IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
+
         setContent {
             FindMyselfTheme {
                 FindMyselfApp()
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (wsr == null) return
+        unregisterReceiver(wsr)
     }
 
     companion object {
@@ -45,14 +60,16 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun FindMyselfApp() {
+fun FindMyselfApp(
+) {
     Scaffold (
         topBar = { FindMyselfTopAppBar()}
     ) {innerPadding ->
         WifiScanScreen(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
+                .padding(innerPadding),
+            wifiScanViewModel = WifiScanViewModel()
         )
     }
 }

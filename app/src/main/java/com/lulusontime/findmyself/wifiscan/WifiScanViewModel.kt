@@ -8,12 +8,31 @@ import com.lulusontime.findmyself.wifiscan.model.WifiScanModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 class WifiScanViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(emptyList<WifiScanModel>())
+    private val _uiState = MutableStateFlow(WifiScanUiState())
     val uiState = _uiState.asStateFlow()
 
-    fun addWifiScans(wifiScans: List<WifiScanModel>) {
-        _uiState.value = _uiState.value + wifiScans
+    fun changePermissionGranted(isGranted: Boolean) {
+        _uiState.update { wifiScanUiState ->
+            WifiScanUiState(
+                wifiScanUiState.currentLocation,
+                wifiScanUiState.isScanning,
+                isGranted
+            )
+        }
+    }
+
+    fun changeLocation(location: String) {
+        _uiState.update {
+            it.copy(currentLocation = location)
+        }
+    }
+
+    fun changeScanStatus(status: Boolean) {
+        _uiState.update {
+            it.copy(isScanning = status)
+        }
     }
 }
