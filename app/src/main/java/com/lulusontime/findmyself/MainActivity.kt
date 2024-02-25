@@ -25,10 +25,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import com.lulusontime.findmyself.wifiscan.broadcastreceiver.WifiScanReceiver
 import com.lulusontime.findmyself.ui.theme.FindMyselfTheme
+import com.lulusontime.findmyself.websocket.MyWebsocketListener
+import com.lulusontime.findmyself.websocket.WebsocketRepository
 import com.lulusontime.findmyself.wifiscan.WifiScanScreen
 import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.WebSocket
 
 class MainActivity : ComponentActivity() {
 
@@ -37,13 +43,27 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        wsr = WifiScanReceiver(this)
+        val wsListener = MyWebsocketListener(lifecycleScope)
+        val request = Request.Builder().url("wss://find-myself-413712.et.r.appspot.com ").build()
+
+        val myWebsocket = WebSocket.Factory { request, listener ->
+            val client = OkHttpClient.Builder()
+                .build()
+            client.newWebSocket(request, listener)
+        }.newWebSocket(request, wsListener)
+
+        val repository = WebsocketRepository.getInstance(myWebsocket)
+
+        wsr = WifiScanReceiver(this, repository)
         registerReceiver(wsr,
             IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
 
         setContent {
             FindMyselfTheme {
-                FindMyselfApp()
+                FindMyselfApp(
+                    repository,
+                    wsListener
+                )
             }
         }
     }
@@ -61,6 +81,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun FindMyselfApp(
+    repository: WebsocketRepository,
+    wsListener: MyWebsocketListener
 ) {
     Scaffold (
         topBar = { FindMyselfTopAppBar()}
@@ -69,7 +91,7 @@ fun FindMyselfApp(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            wifiScanViewModel = WifiScanViewModel()
+            wifiScanViewModel = WifiScanViewModel(repository, wsListener)
         )
     }
 }

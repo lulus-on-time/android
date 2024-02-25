@@ -17,10 +17,15 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.lulusontime.findmyself.websocket.FingerprintDetail
+import com.lulusontime.findmyself.websocket.MyWebsocketListener
+import com.lulusontime.findmyself.websocket.WebsocketRepository
 import com.lulusontime.findmyself.wifiscan.model.WifiScanModel
+import okhttp3.WebSocket
 
 class WifiScanReceiver(
     context: Context,
+    private val repo: WebsocketRepository,
     ) : BroadcastReceiver() {
     private val wifiManager: WifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
@@ -37,7 +42,11 @@ class WifiScanReceiver(
 
         val scanResults = wifiManager.scanResults
 
+        val fingerprintDetails = scanResults.map { result ->
+            FingerprintDetail(result.level, result.BSSID)
+        }
 
+        repo.sendFingerprintData(fingerprintDetails)
     }
 
     companion object {

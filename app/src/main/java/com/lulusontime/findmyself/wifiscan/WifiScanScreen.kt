@@ -116,6 +116,9 @@ fun WifiScanScreen(
                 }
             )
         }
+        if (uiState.amtFPCollected != 0) {
+            Text(text = "Amount of Fingerprint Collected in this Location: ${uiState.amtFPCollected.toString()}")
+        }
         LaunchedEffect(key1 = uiState.isScanning) {
             if (uiState.isScanning) {
                 while (true) {
