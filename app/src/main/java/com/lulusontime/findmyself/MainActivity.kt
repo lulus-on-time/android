@@ -9,91 +9,69 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.lulusontime.findmyself.broadcastreceiver.WifiScanReceiver
+import androidx.lifecycle.lifecycleScope
+import com.lulusontime.findmyself.wifiscan.broadcastreceiver.WifiScanReceiver
 import com.lulusontime.findmyself.ui.theme.FindMyselfTheme
+import com.lulusontime.findmyself.websocket.MyWebsocketListener
+import com.lulusontime.findmyself.websocket.WebsocketRepository
+import com.lulusontime.findmyself.wifiscan.WifiScanScreen
+import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.WebSocket
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var wifiScanReceiver: WifiScanReceiver
+    private var wsr: WifiScanReceiver? = null
 
-    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        for ((permission, granted) in permissions) {
-            if (!granted) {
-                Log.e(TAG, "$permission not granted.")
-                return@registerForActivityResult
-            }
-        }
-        Log.i(TAG, "All Permissions Granted")
-    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val wsListener = MyWebsocketListener(lifecycleScope)
+        val request = Request.Builder().url("wss://find-myself-413712.et.r.appspot.com ").build()
+
+        val myWebsocket = WebSocket.Factory { request, listener ->
+            val client = OkHttpClient.Builder()
+                .build()
+            client.newWebSocket(request, listener)
+        }.newWebSocket(request, wsListener)
+
+        val repository = WebsocketRepository.getInstance(myWebsocket)
+
+        wsr = WifiScanReceiver(this, repository)
+        registerReceiver(wsr,
+            IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
+
         setContent {
             FindMyselfTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Greeting("Android")
-                }
+                FindMyselfApp(
+                    repository,
+                    wsListener
+                )
             }
         }
-
-        checkForPermissions()
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-            Log.e(TAG, "Device Version Lower than R")
-            return
-        }
-        wifiScan()
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if (::wifiScanReceiver.isInitialized) {
-            unregisterReceiver(wifiScanReceiver)
-            Log.i(TAG, "UnRegister Wifi Scan Receiver")
-
-        }
-    }
-
-    private fun checkForPermissions() {
-        val requiredPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.NEARBY_WIFI_DEVICES
-        ) else arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-        )
-
-        requestPermissionLauncher.launch(requiredPermissions)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.R)
-    private fun wifiScan() {
-        wifiScanReceiver = WifiScanReceiver(this)
-
-        registerReceiver(
-            wifiScanReceiver,
-            IntentFilter().apply {
-                addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
-            }
-        )
-        Log.i(TAG, "Register Wifi Scan Receiver")
-
-
-        val wifiManager: WifiManager = getSystemService(Context.WIFI_SERVICE) as WifiManager
-        wifiManager.startScan()
+    override fun onStop() {
+        super.onStop()
+        if (wsr == null) return
+        unregisterReceiver(wsr)
     }
 
     companion object {
@@ -102,17 +80,29 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun FindMyselfApp(
+    repository: WebsocketRepository,
+    wsListener: MyWebsocketListener
+) {
+    Scaffold (
+        topBar = { FindMyselfTopAppBar()}
+    ) {innerPadding ->
+        WifiScanScreen(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            wifiScanViewModel = WifiScanViewModel(repository, wsListener)
+        )
+    }
 }
 
-@Preview(showBackground = true)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GreetingPreview() {
-    FindMyselfTheme {
-        Greeting("Android")
-    }
+fun FindMyselfTopAppBar(
+    modifier: Modifier = Modifier
+) {
+    CenterAlignedTopAppBar(title = {
+        Text(text = stringResource(id = R.string.app_name))
+    },
+        modifier = modifier)
 }
