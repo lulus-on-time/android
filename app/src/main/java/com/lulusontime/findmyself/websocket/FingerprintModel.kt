@@ -1,7 +1,6 @@
 package com.lulusontime.findmyself.websocket
 
 data class FingerprintModel(
-    val location: String,
     val fingerprints: List<FingerprintDetail>
 )
 
@@ -10,7 +9,8 @@ data class FingerprintDetail(
     val bssid: String
 )
 
-data class FingerprintWebsocketBody(
+data class FingerprintOutwardsMessage(
     val reason: String = "fingerprint",
-    val data: FingerprintModel
+    val data: FingerprintModel,
+    val npm: String?,
 )
