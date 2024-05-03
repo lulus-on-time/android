@@ -4,9 +4,11 @@ import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiConfiguration
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.util.Log
+import androidx.core.content.getSystemService
 import com.google.gson.Gson
 import com.lulusontime.findmyself.websocket.FingerprintDetail
 import com.lulusontime.findmyself.websocket.FingerprintOutwardsMessage
@@ -33,12 +35,15 @@ class WifiScanReceiver(
         val scanResults = wifiManager.scanResults
 
         val fingerprintDetails = scanResults.map { result ->
+
             if (Build.VERSION.SDK_INT < 33) {
                 FingerprintDetail(result.level, result.BSSID.uppercase())
             } else {
                 FingerprintDetail(result.level, result.BSSID.uppercase())
             }
         }
+
+        Log.i("Wifi Scan Receiver", fingerprintDetails.toString())
 
         viewModel.sendFingerprintData(fingerprintDetails)
     }
