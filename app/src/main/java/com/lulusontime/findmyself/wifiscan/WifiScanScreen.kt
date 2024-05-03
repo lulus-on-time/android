@@ -14,6 +14,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -63,10 +64,15 @@ fun WifiScanScreen(
         }
     }
 
-    checkPermissions()
-
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text("Permissions Granted: ${uiState.isPermissionGranted}")
+        if (!uiState.isPermissionGranted) {
+            Button(onClick = {
+                checkPermissions()
+            }) {
+                Text("Enable Permissions")
+            }
+        }
         TextField(value = uiState.npm, onValueChange = {
             wifiScanViewModel.changeNpm(it);
         })
@@ -99,5 +105,9 @@ fun WifiScanScreen(
                 wifiManager.startScan()
             }
         }
+    }
+
+    SideEffect {
+        checkPermissions()
     }
 }
