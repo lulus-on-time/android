@@ -1,6 +1,7 @@
 package com.lulusontime.findmyself.wifiscan.repository
 
 import android.content.Context
+import androidx.compose.runtime.collectAsState
 import com.google.gson.Gson
 import com.lulusontime.findmyself.BuildConfig
 import com.lulusontime.findmyself.websocket.FingerprintDetail
@@ -8,8 +9,11 @@ import com.lulusontime.findmyself.websocket.FingerprintModel
 import com.lulusontime.findmyself.websocket.FingerprintOutwardsMessage
 import com.lulusontime.findmyself.websocket.MyWebsocketListener
 import com.lulusontime.findmyself.wifiscan.broadcastreceiver.WifiScanReceiver
+import com.lulusontime.findmyself.wifiscan.data.WssResponseBody
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -41,8 +45,8 @@ class WifiScanRepository private constructor() {
     private val _isWssConnected = MutableStateFlow(false)
     val isWssConnected = _isWssConnected as StateFlow<Boolean>
 
-    private val _location = MutableStateFlow("")
-    val location = _location as StateFlow<String>
+    private val _location = MutableStateFlow(WssResponseBody())
+    val location = _location.asStateFlow()
 
     private val npm = MutableStateFlow("")
 
@@ -82,12 +86,14 @@ class WifiScanRepository private constructor() {
     }
 
     fun setLocation(location: String) {
-        _location.value = location
+       _location.update {
+           Gson().fromJson(location, WssResponseBody::class.java)
+       }
     }
 
     companion object {
         @Volatile
-        var INSTANCE: WifiScanRepository? = null
+        private var INSTANCE: WifiScanRepository? = null
 
         fun getInstance(): WifiScanRepository {
             return INSTANCE ?: synchronized(this) {

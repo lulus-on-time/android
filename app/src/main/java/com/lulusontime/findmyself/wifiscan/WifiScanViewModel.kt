@@ -26,13 +26,6 @@ class WifiScanViewModel(
                 }
             }
         }
-        viewModelScope.launch {
-            repository.location.collect {locationInfo ->
-                _uiState.update {
-                    it.copy(location = it.location.plus(locationInfo))
-                }
-            }
-        }
     }
 
     fun changePermissionGranted(isGranted: Boolean) {

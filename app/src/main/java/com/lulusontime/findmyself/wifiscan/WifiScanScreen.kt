@@ -104,12 +104,6 @@ fun WifiScanScreen(
                 Text("Reconnect manually")
             }
         }
-        LazyColumn(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
-            items(uiState.location) {
-                Text(text=it)
-                Divider(thickness = 1.dp, color = Color.Red)
-            }
-        }
     }
 
     SideEffect {

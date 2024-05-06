@@ -44,8 +44,6 @@ class WifiScanReceiver(
             }
         }
 
-        Log.i("Wifi Scan Receiver", fingerprintDetails.toString())
-
         repository.sendFingerprintData(fingerprintDetails)
     }
 
