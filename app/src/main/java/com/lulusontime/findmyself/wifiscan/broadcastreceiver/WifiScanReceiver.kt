@@ -13,11 +13,12 @@ import com.google.gson.Gson
 import com.lulusontime.findmyself.websocket.FingerprintDetail
 import com.lulusontime.findmyself.websocket.FingerprintOutwardsMessage
 import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
+import com.lulusontime.findmyself.wifiscan.repository.WifiScanRepository
 import okhttp3.WebSocket
 
 class WifiScanReceiver(
     context: Context,
-    var viewModel: WifiScanViewModel
+    var repository: WifiScanRepository
     ) : BroadcastReceiver() {
     private val wifiManager: WifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
@@ -45,7 +46,7 @@ class WifiScanReceiver(
 
         Log.i("Wifi Scan Receiver", fingerprintDetails.toString())
 
-        viewModel.sendFingerprintData(fingerprintDetails)
+        repository.sendFingerprintData(fingerprintDetails)
     }
 
     companion object {

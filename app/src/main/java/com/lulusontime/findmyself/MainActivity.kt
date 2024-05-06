@@ -1,5 +1,6 @@
 package com.lulusontime.findmyself
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,16 +12,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.lulusontime.findmyself.wifiscan.broadcastreceiver.WifiScanReceiver
 import com.lulusontime.findmyself.ui.theme.FindMyselfTheme
 import com.lulusontime.findmyself.wifiscan.WifiScanScreen
 import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
+import com.lulusontime.findmyself.wifiscan.repository.WifiScanRepository
+import com.lulusontime.findmyself.wifiscan.service.WifiScanService
 
 class MainActivity : ComponentActivity() {
-
-    private var wsr: WifiScanReceiver? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -47,7 +48,7 @@ fun FindMyselfApp(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            wifiScanViewModel = WifiScanViewModel()
+            wifiScanViewModel = WifiScanViewModel(WifiScanRepository.getInstance())
         )
     }
 }

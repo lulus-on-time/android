@@ -1,14 +1,20 @@
 package com.lulusontime.findmyself.wifiscan
 
 import android.Manifest
+import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.wifi.WifiManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -19,6 +25,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
@@ -27,6 +35,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lulusontime.findmyself.websocket.MyWebsocketListener
 import com.lulusontime.findmyself.wifiscan.broadcastreceiver.WifiScanReceiver
+import com.lulusontime.findmyself.wifiscan.service.WifiScanService
 import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -40,12 +49,10 @@ fun WifiScanScreen(
     val uiState by wifiScanViewModel.uiState.collectAsState()
 
     val ctx = LocalContext.current
-    val wifiManager = ctx.getSystemService(WifiManager::class.java)
     val launcher = rememberLauncherForActivityResult(contract =
     ActivityResultContracts.RequestPermission(), onResult = {isGranted ->
         wifiScanViewModel.changePermissionGranted(isGranted)
     })
-    val wsr = WifiScanReceiver(ctx, wifiScanViewModel)
 
     fun checkPermissions() {
         when {
@@ -54,7 +61,22 @@ fun WifiScanScreen(
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED -> {
                 // You can use the API that requires the permission.
-                wifiScanViewModel.changePermissionGranted(true)
+                when {
+                    ContextCompat.checkSelfPermission(
+                        ctx,
+                        Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED -> {
+                        // You can use the API that requires the permission.
+                        wifiScanViewModel.changePermissionGranted(true)
+                    }
+                    else -> {
+                        // You can directly ask for the permission.
+                        // The registered ActivityResultCallback gets the result of this request.
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            launcher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                        }
+                    }
+                }
             }
             else -> {
                 // You can directly ask for the permission.
@@ -75,39 +97,34 @@ fun WifiScanScreen(
         }
         TextField(value = uiState.npm, onValueChange = {
             wifiScanViewModel.changeNpm(it);
-        })
-        Button(onClick = {
-            wifiScanViewModel.changeScanStatus(toggle = true)
-        }, enabled = uiState.isWsConnected) {
-            Text(text = if (uiState.isScanning) "Stop Scanning" else "Start Scanning")
-        }
+        }, enabled = !uiState.isWsConnected)
         if (!uiState.isWsConnected) {
             Text("Max reconnection attempt done, please reconnect manually")
             Button(onClick = { wifiScanViewModel.forceReconnect() }) {
                 Text("Reconnect manually")
             }
         }
-    }
-
-    DisposableEffect(ctx) {
-
-        ctx.registerReceiver(wsr, IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
-
-        onDispose {
-            ctx.unregisterReceiver(wsr)
-        }
-    }
-
-    if (uiState.isScanning) {
-        LaunchedEffect(Unit) {
-            while (uiState.isScanning) {
-                delay(2000)
-                wifiManager.startScan()
+        LazyColumn(verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+            items(uiState.location) {
+                Text(text=it)
+                Divider(thickness = 1.dp, color = Color.Red)
             }
         }
     }
 
     SideEffect {
         checkPermissions()
+    }
+
+    if (uiState.isWsConnected && uiState.isPermissionGranted) {
+        DisposableEffect(Unit) {
+
+            val intent = Intent(ctx, WifiScanService::class.java)
+            ctx.startService(intent)
+
+            onDispose {
+                ctx.stopService(intent)
+            }
+        }
     }
 }
