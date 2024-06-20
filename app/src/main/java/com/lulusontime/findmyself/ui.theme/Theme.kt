@@ -1,4 +1,4 @@
-package com.lulusontime.findmyself.ui.theme
+package com.example.findmyself.ui.theme
 
 import android.app.Activity
 import android.os.Build

@@ -1,40 +1,37 @@
 package com.lulusontime.findmyself.websocket
 
-import android.util.Log
-import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
+import com.lulusontime.findmyself.wifiscan.repository.WifiScanRepository
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
-import okio.ByteString
 
 class MyWebsocketListener(
-    private val viewModel: WifiScanViewModel
+    private val repository: WifiScanRepository
 ) : WebSocketListener() {
 
 
     override fun onMessage(webSocket: WebSocket, text: String) {
         super.onMessage(webSocket, text)
-
+        repository.setLocation(text)
     }
 
     override fun onOpen(webSocket: WebSocket, response: Response) {
         super.onOpen(webSocket, response)
-        viewModel.changeIsWsConnected(true)
+        repository.changeIsWssConnectedToTrue()
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         super.onClosed(webSocket, code, reason)
-        viewModel.reconnect()
+        repository.reconnect()
     }
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         super.onFailure(webSocket, t, response)
-        viewModel.reconnect()
+        repository.reconnect()
+    }
+
+    override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+        super.onClosing(webSocket, code, reason)
+        repository.reconnect()
     }
 }
