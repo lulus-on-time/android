@@ -70,8 +70,8 @@ class WifiScanService : Service() {
             registerReceiver(wsr, IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION), RECEIVER_NOT_EXPORTED)
             scope.launch {
                 while(true) {
-                    delay(2000)
                     wifiManager?.startScan()
+                    delay(1000)
                 }
             }
         } catch (e: Exception) {

@@ -33,6 +33,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".auth.AuthActivity"
+            android:theme="@style/Theme.FindMyself"
+            android:exported="false">
+        </activity>
+
+
         <service
             android:name=".wifiscan.service.WifiScanService"
             android:foregroundServiceType="location"

@@ -1,11 +1,9 @@
 package com.lulusontime.findmyself.map
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
@@ -46,8 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.core.widget.ContentLoadingProgressBar
-import com.lulusontime.findmyself.AuthActivity
+import com.lulusontime.findmyself.auth.AuthActivity
 import com.lulusontime.findmyself.R
 import com.lulusontime.findmyself.wifiscan.WifiScanViewModel
 import com.lulusontime.findmyself.wifiscan.service.WifiScanService
@@ -70,7 +67,8 @@ fun MapScreen(mapViewModel: MapViewModel, wifiScanViewModel: WifiScanViewModel) 
     val vScroll = rememberScrollState()
 
     val myLocScrollValue = listOf(
-        (mapUiState.myLoc[1] * mapUiState.scale + 125 - displayMetrics.widthPixels / 2).toInt(),
+        ((mapUiState.myLoc[1] ?: 0.0) * mapUiState.scale + 125 - displayMetrics.widthPixels / 2)
+            .toInt(),
         ((mapUiState.geojsonResponse.floor.maxY - (mapUiState.myLoc[0])) * mapUiState.scale +
                 125 -
                 displayMetrics

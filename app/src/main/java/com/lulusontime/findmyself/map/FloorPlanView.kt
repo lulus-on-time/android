@@ -1,5 +1,6 @@
 package com.lulusontime.findmyself.map
 
+import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,8 @@ List<Double>, scale: Float) {
     val maxX = geoJsonResponse.floor.maxX
     val maxY = geoJsonResponse.floor.maxY
 
+    Log.i("FloorPlanView", "myLoc: (${myLoc[0]},  ${myLoc[1]})")
+
     Canvas(
         modifier = modifier
             .width((maxX / density * scale).dp + 100.dp)
@@ -61,13 +64,16 @@ List<Double>, scale: Float) {
             color = PrimaryBlue,
             radius = 20f,
             center = Offset(myLoc[1].toFloat() * scale, (maxY - myLoc[0]).toFloat() * scale)
+//            center = Offset(myLoc[0].toFloat() * scale, (maxY - myLoc[1]).toFloat() * scale)
         )
         drawCircle(
             color = Color.White,
             radius = 25f,
             center = Offset(myLoc[1].toFloat() * scale, (maxY - myLoc[0]).toFloat() * scale),
+//            center = Offset(myLoc[0].toFloat() * scale, (maxY - myLoc[1]).toFloat() * scale),
             style = Stroke(width = 10f)
         )
+
     }
 }
 
